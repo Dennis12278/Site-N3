@@ -1,0 +1,94 @@
+<div class="titulos-page">
+
+    <app-sidebar></app-sidebar>
+
+    <main class="titulos-content">
+
+        <div class="topo">
+
+            <h1>Títulos seguidos</h1>
+
+            <p>Títulos que você marcou como lendo, para ler ou concluídos.</p>
+
+        </div>
+
+
+        <!-- ABAS -->
+
+        <div class="abas">
+
+            <button
+                type="button"
+                *ngFor="let aba of abas"
+                [class.ativa]="abaAtiva === aba.valor"
+                (click)="selecionarAba(aba.valor)"
+            >
+                {{ aba.texto }}
+                <span class="contador">{{ contar(aba.valor) }}</span>
+            </button>
+
+        </div>
+
+
+        <!-- FILTROS -->
+
+        <div class="filtros">
+
+            <div class="entrada">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Pesquisar títulos..." [(ngModel)]="pesquisa">
+            </div>
+
+            <select [(ngModel)]="ordenacao">
+                <option value="recentes">Mais recentes</option>
+                <option value="titulo">Título</option>
+            </select>
+
+        </div>
+
+        <div class="contagem">
+            {{ titulosFiltrados.length }}
+            {{ titulosFiltrados.length === 1 ? 'título' : 'títulos' }}
+        </div>
+
+
+        <!-- GRADE -->
+
+        <div class="grade" *ngIf="titulosFiltrados.length > 0">
+
+            <article
+                class="card"
+                *ngFor="let titulo of titulosFiltrados"
+                (click)="abrirTitulo(titulo)"
+            >
+
+                <div class="capa">
+                    <img *ngIf="titulo.capa" [src]="urlCapa(titulo.capa)" [alt]="titulo.titulo">
+                    <i *ngIf="!titulo.capa" class="bi bi-book"></i>
+                    <span class="marcador">{{ nomeMarcador(titulo.marcador) }}</span>
+                </div>
+
+                <h3>{{ titulo.titulo }}</h3>
+
+                <span class="tempo">{{ tempoAtras(titulo.dataPublicacao) }}</span>
+
+            </article>
+
+        </div>
+
+
+        <!-- VAZIO -->
+
+        <div class="vazio" *ngIf="!carregando && titulosFiltrados.length === 0">
+
+            <i class="bi bi-bookmark"></i>
+
+            <h2>Nenhum título aqui ainda</h2>
+
+            <p>Abra uma publicação e use o botão Seguir para marcar um título.</p>
+
+        </div>
+
+    </main>
+
+</div>

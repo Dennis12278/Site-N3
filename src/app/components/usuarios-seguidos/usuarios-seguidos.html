@@ -1,0 +1,78 @@
+<div class="seguidos-page">
+
+    <app-sidebar></app-sidebar>
+
+    <main class="seguidos-content">
+
+        <div class="topo">
+
+            <div>
+                <h1>Usuários seguidos</h1>
+                <p>
+                    {{ usuarios.length }}
+                    {{ usuarios.length === 1 ? 'usuário que você segue.' : 'usuários que você segue.' }}
+                </p>
+            </div>
+
+            <div class="acoes-topo">
+
+                <div class="pesquisa">
+                    <i class="bi bi-search"></i>
+                    <input type="text" placeholder="Pesquisar usuários" [(ngModel)]="pesquisa">
+                </div>
+
+                <select [(ngModel)]="ordenacao">
+                    <option value="recentes">Mais recentes</option>
+                    <option value="nome">Nome (A-Z)</option>
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <section class="lista" *ngIf="usuariosFiltrados.length > 0">
+
+            <article class="usuario-card" *ngFor="let usuario of usuariosFiltrados">
+
+                <div class="avatar" (click)="abrirPerfil(usuario)">
+
+                    <img *ngIf="usuario.avatar" [src]="urlAvatar(usuario.avatar)" [alt]="usuario.nome">
+
+                    <span *ngIf="!usuario.avatar">{{ inicial(usuario.nome) }}</span>
+
+                </div>
+
+                <div class="info" (click)="abrirPerfil(usuario)">
+
+                    <strong>{{ usuario.nome }}</strong>
+
+                    <span>
+                        {{ usuario.publicacoes }}
+                        {{ usuario.publicacoes === 1 ? 'publicação' : 'publicações' }}
+                    </span>
+
+                </div>
+
+                <button type="button" class="deixar" (click)="deixarDeSeguir(usuario)">
+                    Deixar de seguir
+                </button>
+
+            </article>
+
+        </section>
+
+
+        <section class="vazio" *ngIf="!carregando && usuariosFiltrados.length === 0">
+
+            <i class="bi bi-person-plus"></i>
+
+            <h2>Você ainda não segue ninguém.</h2>
+
+            <p>Quando você seguir outros usuários, eles aparecerão aqui.</p>
+
+        </section>
+
+    </main>
+
+</div>
