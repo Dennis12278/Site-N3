@@ -26,8 +26,10 @@ export class SessaoService {
     return SessaoService.usuario()?.token ?? null;
   }
 
+  // logado de verdade: tem usuário E token
   static estaLogado(): boolean {
-    return SessaoService.usuario() !== null;
+    const usuario = SessaoService.usuario();
+    return !!usuario && !!usuario.token;
   }
 
   static entrar(usuario: UsuarioSessao): void {

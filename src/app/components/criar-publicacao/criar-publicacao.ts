@@ -21,6 +21,7 @@ export class CriarPublicacao implements OnInit {
   descricao = '';
   visibilidade = 'publica';
 
+  // arquivo de leitura (PDF ou TXT), enviado depois de salvar a publicação
   arquivoSelecionado: File | null = null;
   capaSelecionada: File | null = null;
 
@@ -84,25 +85,34 @@ export class CriarPublicacao implements OnInit {
     } else if (this.capaAtual && !this.removerCapa) {
       this.capaPreview = this.apiService.urlCapa(this.capaAtual);
 
-    } else if (this.arquivoSelecionado?.type.startsWith('image/')) {
-      this.capaPreview = URL.createObjectURL(this.arquivoSelecionado);
-
     } else {
       this.capaPreview = '';
     }
   }
 
   selecionarArquivo(event: Event): void {
+
     const input = event.target as HTMLInputElement;
 
-    if (input.files && input.files.length > 0) {
-      this.arquivoSelecionado = input.files[0];
-
-      this.atualizarPreview();
+    if (!input.files || input.files.length === 0) {
+      return;
     }
+
+    const arquivo = input.files[0];
+    const nome = arquivo.name.toLowerCase();
+
+    if (!nome.endsWith('.pdf') && !nome.endsWith('.txt')) {
+      alert('Escolha um arquivo PDF ou TXT.');
+      input.value = '';
+      this.arquivoSelecionado = null;
+      return;
+    }
+
+    this.arquivoSelecionado = arquivo;
   }
 
   escolherCapa(event: Event): void {
+
     const input = event.target as HTMLInputElement;
 
     if (input.files && input.files.length > 0) {
@@ -165,9 +175,15 @@ export class CriarPublicacao implements OnInit {
   salvarDocumento(documento: FormData): void {
 
     this.apiService.criarDocumento(documento).subscribe({
-      next: () => {
-        alert('Publicação criada com sucesso!');
 
+      next: (criado: any) => {
+
+        if (this.arquivoSelecionado) {
+          this.enviarArquivo(criado.id, 'Publicação criada com sucesso!');
+          return;
+        }
+
+        alert('Publicação criada com sucesso!');
         this.router.navigate(['/minhas-publicacoes']);
       },
 
@@ -186,9 +202,15 @@ export class CriarPublicacao implements OnInit {
   atualizarDocumento(id: number, documento: FormData): void {
 
     this.apiService.editarDocumento(id, documento).subscribe({
-      next: () => {
-        alert('Publicação atualizada com sucesso!');
 
+      next: () => {
+
+        if (this.arquivoSelecionado) {
+          this.enviarArquivo(id, 'Publicação atualizada com sucesso!');
+          return;
+        }
+
+        alert('Publicação atualizada com sucesso!');
         this.router.navigate(['/minhas-publicacoes']);
       },
 
@@ -200,6 +222,38 @@ export class CriarPublicacao implements OnInit {
         alert('Não foi possível atualizar a publicação.');
 
         this.changeDetectorRef.detectChanges();
+      }
+    });
+  }
+
+  
+  private enviarArquivo(idDocumento: number, mensagemSucesso: string): void {
+
+    const usuario = SessaoService.usuario();
+
+    if (!usuario || !this.arquivoSelecionado) {
+      alert(mensagemSucesso);
+      this.router.navigate(['/minhas-publicacoes']);
+      return;
+    }
+
+    this.apiService.enviarArquivoLeitura(idDocumento, usuario.id, this.arquivoSelecionado).subscribe({
+
+      next: () => {
+        alert(mensagemSucesso);
+        this.router.navigate(['/minhas-publicacoes']);
+      },
+
+      error: erro => {
+
+        console.error('Erro ao enviar arquivo de leitura:', erro);
+
+        
+        this.enviando = false;
+
+        alert(mensagemSucesso + ' Mas o arquivo não foi enviado. Envie-o pela página de leitura.');
+
+        this.router.navigate(['/minhas-publicacoes']);
       }
     });
   }

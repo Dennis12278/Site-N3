@@ -248,6 +248,36 @@ export class ApiService {
     return this.http.delete(this.apiUrl + '/Seguidor/Deixar?idUsuario=' + idUsuario + '&idAlvo=' + idAlvo);
   }
 
+  /* =========================================
+     CONFIGURAÇÕES
+  ========================================= */
+
+  obterPreferencias(idUsuario: number) {
+    return this.http.get<any>(this.apiUrl + '/Perfil/' + idUsuario + '/Preferencias');
+  }
+
+  salvarPreferencias(idUsuario: number, dados: { perfilPublico: boolean; mostrarPublicacoes: boolean; mostrarEstatisticas: boolean }) {
+    return this.http.put(this.apiUrl + '/Perfil/' + idUsuario + '/Preferencias', dados);
+  }
+
+  trocarSenha(idUsuario: number, dados: { senhaAtual: string; novaSenha: string }) {
+    return this.http.put(this.apiUrl + '/Perfil/' + idUsuario + '/Senha', dados);
+  }
+
+  /* =========================================
+     ARQUIVO DE LEITURA (PDF / TXT)
+  ========================================= */
+
+  enviarArquivoLeitura(idDocumento: number, idUsuario: number, arquivo: File) {
+    const formulario = new FormData();
+    formulario.append('Arquivo', arquivo);
+    return this.http.post(this.apiUrl + '/Leitura/' + idDocumento + '/Arquivo?idUsuario=' + idUsuario, formulario);
+  }
+
+  obterArquivoLeitura(idDocumento: number) {
+    return this.http.get(this.apiUrl + '/Leitura/' + idDocumento + '/Arquivo', { responseType: 'blob' });
+  }
+
   listarGruposSeguidos(idUsuario: number) {
     return this.http.get<any[]>(this.apiUrl + '/GrupoUsuario/Seguidos?idUsuario=' + idUsuario);
   }

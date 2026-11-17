@@ -12,18 +12,19 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const token = SessaoService.token();
 
+  const ehApi = req.url.startsWith(API_URL);
+  const ehLogin = req.url.includes('/Auth/');
 
-  const requisicao = token && req.url.startsWith(API_URL)
+  
+  const requisicao = token && ehApi
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : req;
 
   return next(requisicao).pipe(
     catchError((erro: HttpErrorResponse) => {
 
-   
-      const ehLogin = req.url.includes('/Auth/');
-
-      if (erro.status === 401 && req.url.startsWith(API_URL) && !ehLogin) {
+     
+      if (erro.status === 401 && ehApi && !ehLogin && token) {
         SessaoService.sair();
         router.navigate(['/login']);
       }

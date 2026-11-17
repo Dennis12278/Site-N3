@@ -177,6 +177,11 @@ export class VisualizarPublicacao implements OnInit, OnDestroy {
      MENUS
   ========================================= */
 
+  // "Continuar lendo" quando a publicação já está marcada como Lendo
+  get textoBotaoLer(): string {
+    return this.marcadorAtual === 'lendo' ? 'Continuar lendo' : 'Começar a ler';
+  }
+
   get textoMarcadorAtual(): string {
 
     const opcao = this.opcoes.find(o => o.valor === this.marcadorAtual);
@@ -446,6 +451,40 @@ export class VisualizarPublicacao implements OnInit, OnDestroy {
     // salva o que foi lido antes de sair da página
     if (this.publicacao) {
       this.enviarProgresso(this.publicacao.id);
+    }
+
+  }
+
+  /* =========================================
+     COMEÇAR A LER
+  ========================================= */
+
+  comecarLeitura(): void {
+
+    const usuario = SessaoService.usuario();
+
+    // só marca como Lendo se a publicação ainda não tem marcador
+    // (não sobrescreve "Concluído", "Em pausa" etc.)
+    if (usuario && this.publicacao && this.marcadorAtual === '') {
+
+      this.apiService.definirMarcador(usuario.id, this.publicacao.id, 'lendo').subscribe({
+
+        next: () => {
+          this.marcadorAtual = 'lendo';
+          this.changeDetectorRef.detectChanges();
+        },
+
+        error: erro => console.error('Erro ao marcar como lendo:', erro)
+
+      });
+
+    }
+
+    // rola até o início da descrição
+    const descricao = document.querySelector('.descricao');
+
+    if (descricao) {
+      descricao.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
   }
