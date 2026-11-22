@@ -695,3 +695,141 @@
     }
 
 }
+
+/* ===== CRIAR GRUPO ===== */
+
+.botao-criar-grupo {
+    height: 36px;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #5fd3ee;
+    border: none;
+    border-radius: 6px;
+    color: #152126;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.modal-grupo-fundo {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-grupo {
+    width: 480px;
+    max-width: calc(100vw - 32px);
+    background: #29343a;
+    border: 1px solid #3d4b52;
+    border-radius: 10px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    color: #e4e9ec;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-grupo-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid #3d4b52;
+}
+
+.modal-grupo-topo h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.botao-fechar-grupo {
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: #9aa7ac;
+    cursor: pointer;
+}
+
+.modal-grupo-corpo {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-grupo-corpo label {
+    font-size: 11px;
+    color: #7f8d93;
+    letter-spacing: 0.5px;
+    margin-top: 6px;
+}
+
+.modal-grupo-corpo input,
+.modal-grupo-corpo textarea {
+    background: #222b30;
+    border: 1px solid #3d4b52;
+    border-radius: 7px;
+    color: #e4e9ec;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.modal-grupo-corpo input:focus,
+.modal-grupo-corpo textarea:focus {
+    border-color: #5fd3ee;
+}
+
+.dica-grupo {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #7f8d93;
+}
+
+.modal-grupo-rodape {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 18px;
+    border-top: 1px solid #3d4b52;
+}
+
+.botao-cancelar-grupo,
+.botao-salvar-grupo {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.botao-cancelar-grupo {
+    background: transparent;
+    border: 1px solid #3d4b52;
+    color: #cdd6da;
+}
+
+.botao-salvar-grupo {
+    background: #5fd3ee;
+    border: none;
+    color: #152126;
+    font-weight: 700;
+}
+
+.botao-salvar-grupo:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}

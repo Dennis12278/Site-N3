@@ -41,6 +41,17 @@
 
       <div class="acoes">
 
+        <!-- CRIAR GRUPO -->
+
+        <button
+          type="button"
+          class="botao-criar-grupo"
+          (click)="abrirCriarGrupo()"
+        >
+          <i class="bi bi-plus-lg"></i>
+          Criar grupo
+        </button>
+
         <div class="pesquisa">
 
           <i class="bi bi-search"></i>
@@ -151,4 +162,47 @@
 
   </main>
 
+
+  <!-- ===== MODAL: CRIAR GRUPO ===== -->
+
+  <div class="modal-grupo-fundo" *ngIf="criandoGrupo" (click)="fecharCriarGrupo()">
+
+    <div class="modal-grupo" (click)="$event.stopPropagation()">
+
+      <header class="modal-grupo-topo">
+        <h2>Criar grupo</h2>
+        <button type="button" class="botao-fechar-grupo" (click)="fecharCriarGrupo()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </header>
+
+      <div class="modal-grupo-corpo">
+
+        <label>NOME</label>
+        <input type="text" [(ngModel)]="novoNome" placeholder="Nome do grupo">
+
+        <label>DESCRIÇÃO</label>
+        <textarea rows="4" [(ngModel)]="novaDescricao" placeholder="Sobre o que é este grupo?"></textarea>
+
+        <p class="dica-grupo">
+          Você passa a seguir o grupo automaticamente.
+        </p>
+
+      </div>
+
+      <footer class="modal-grupo-rodape">
+        <button type="button" class="botao-cancelar-grupo" (click)="fecharCriarGrupo()">Cancelar</button>
+        <button
+          type="button"
+          class="botao-salvar-grupo"
+          [disabled]="salvandoGrupo"
+          (click)="salvarGrupo()"
+        >
+          {{ salvandoGrupo ? 'Criando...' : 'Criar grupo' }}
+        </button>
+      </footer>
+
+    </div>
+
+  </div>
 </div>

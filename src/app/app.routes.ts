@@ -17,6 +17,7 @@ import { VisualizarPublicacao } from './components/visualizar-publicacao/visuali
 import { NovaColecao } from './components/nova-colecao/nova-colecao';
 import { ColecaoDetalhe } from './components/colecao-detalhe/colecao-detalhe';
 import { Leitor } from './components/leitor/leitor';
+import { GrupoDetalhe } from './components/grupo-detalhe/grupo-detalhe';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -47,6 +48,8 @@ export const routes: Routes = [
       { path: 'usuarios-seguidos', component: UsuariosSeguidos },
 
       { path: 'grupos-seguidos', component: GruposSeguidos },
+
+      { path: 'grupo/:id', component: GrupoDetalhe },
 
       { path: 'historico-leitura', component: HistoricoLeitura },
 

@@ -1,5 +1,6 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { SidebarComponent } from '../sidebar/sidebar';
 import { ApiService } from '../../services/api.service';
@@ -28,13 +29,20 @@ export class GruposSeguidos {
 
   pesquisa: string = '';
 
+  // criação de grupo
+  criandoGrupo = false;
+  novoNome = '';
+  novaDescricao = '';
+  salvandoGrupo = false;
+
   ordenacao: string = 'Recentes';
 
   grupos: GrupoSeguido[] = [];
 
   constructor(
     private apiService: ApiService,
-    private changeDetectorRef: ChangeDetectorRef
+    private changeDetectorRef: ChangeDetectorRef,
+    private router: Router
   ) {
     this.carregarGrupos();
   }
@@ -170,4 +178,55 @@ export class GruposSeguidos {
 
   }
 
+
+  /* =========================================
+     CRIAR GRUPO (quem cria passa a seguir)
+  ========================================= */
+
+  abrirCriarGrupo(): void {
+    this.novoNome = '';
+    this.novaDescricao = '';
+    this.criandoGrupo = true;
+  }
+
+  fecharCriarGrupo(): void {
+    this.criandoGrupo = false;
+  }
+
+  salvarGrupo(): void {
+
+    const usuario = SessaoService.usuario();
+
+    if (!usuario || this.salvandoGrupo) {
+      return;
+    }
+
+    if (this.novoNome.trim() === '') {
+      alert('Informe o nome do grupo.');
+      return;
+    }
+
+    this.salvandoGrupo = true;
+
+    this.apiService.criarGrupo({
+      nome: this.novoNome.trim(),
+      descricao: this.novaDescricao.trim(),
+      idUsuario: usuario.id
+    }).subscribe({
+
+      next: (resposta: any) => {
+        this.salvandoGrupo = false;
+        this.criandoGrupo = false;
+        this.router.navigate(['/grupo', resposta.id]);
+      },
+
+      error: erro => {
+        console.error('Erro ao criar grupo:', erro);
+        this.salvandoGrupo = false;
+        alert('Não foi possível criar o grupo.');
+      }
+
+    });
+
+  }
 }
