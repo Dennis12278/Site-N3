@@ -16,6 +16,7 @@ import { Home } from './components/home/home';
 import { VisualizarPublicacao } from './components/visualizar-publicacao/visualizar-publicacao';
 import { NovaColecao } from './components/nova-colecao/nova-colecao';
 import { ColecaoDetalhe } from './components/colecao-detalhe/colecao-detalhe';
+import { Leitor } from './components/leitor/leitor';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -39,6 +40,8 @@ export const routes: Routes = [
 
       { path: 'publicacao/:id', component: VisualizarPublicacao },
 
+      { path: 'leitor/:id', component: Leitor },
+
       { path: 'titulos-seguidos', component: TitulosSeguidos },
 
       { path: 'usuarios-seguidos', component: UsuariosSeguidos },
@@ -54,9 +57,9 @@ export const routes: Routes = [
       { path: 'minhas-publicacoes', component: MinhasPublicacoes },
 
       { path: 'nova-colecao', component: NovaColecao },
-     
+
       { path: 'colecao/:id', component: ColecaoDetalhe },
-     
+
       { path: 'colecao/:id/editar', component: NovaColecao },
 
       {

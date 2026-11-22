@@ -1,0 +1,105 @@
+<div class="grupo-page">
+
+    <main class="grupo-content">
+
+        <div class="carregando" *ngIf="carregando">Carregando...</div>
+
+        <div class="nao-encontrado" *ngIf="!carregando && naoEncontrado">
+            <h2>Grupo não encontrado</h2>
+            <button type="button" class="botao-voltar" (click)="voltar()">Voltar para grupos</button>
+        </div>
+
+        <ng-container *ngIf="grupo && !carregando">
+
+            <!-- MIGALHAS -->
+
+            <nav class="migalhas">
+                <a (click)="voltar()">INÍCIO</a>
+                <span>/</span>
+                <a (click)="voltar()">GRUPOS</a>
+                <span>/</span>
+                <b>{{ grupo.nome | uppercase }}</b>
+            </nav>
+
+            <!-- CABEÇALHO -->
+
+            <section class="cabecalho">
+
+                <div class="logo-grupo">{{ inicial }}</div>
+
+                <div class="info-grupo">
+
+                    <h1>{{ grupo.nome }}</h1>
+
+                    <p class="estatisticas">
+                        <strong>{{ grupo.membros.length }}</strong> {{ grupo.membros.length === 1 ? 'membro' : 'membros' }}
+                        · <strong>{{ grupo.titulos }}</strong> {{ grupo.titulos === 1 ? 'título' : 'títulos' }}
+                    </p>
+
+                    <p class="descricao" *ngIf="grupo.descricao">{{ grupo.descricao }}</p>
+
+                    <button
+                        type="button"
+                        class="botao-seguir"
+                        [class.seguindo]="grupo.seguindo"
+                        [disabled]="processando"
+                        (click)="alternarSeguir()"
+                    >
+                        <i class="bi" [ngClass]="grupo.seguindo ? 'bi-person-check' : 'bi-person-plus'"></i>
+                        {{ grupo.seguindo ? 'Seguindo' : 'Seguir' }}
+                    </button>
+
+                </div>
+
+            </section>
+
+            <!-- ABAS -->
+
+            <nav class="abas">
+
+                <button type="button" [class.ativa]="abaAtiva === 'titulos'" (click)="abaAtiva = 'titulos'">
+                    Títulos
+                </button>
+
+                <button type="button" [class.ativa]="abaAtiva === 'recentes'" (click)="abaAtiva = 'recentes'">
+                    Lançamentos recentes
+                </button>
+
+                <button type="button" [class.ativa]="abaAtiva === 'membros'" (click)="abaAtiva = 'membros'">
+                    Membros
+                </button>
+
+            </nav>
+
+            <!-- TÍTULOS -->
+
+            <section class="vazio" *ngIf="abaAtiva === 'titulos'">
+                <i class="bi bi-journal-bookmark"></i>
+                <h2>Nenhum título compartilhado ainda</h2>
+                <p>Os títulos que forem compartilhados com este grupo aparecerão aqui.</p>
+            </section>
+
+            <!-- LANÇAMENTOS RECENTES -->
+
+            <section class="vazio" *ngIf="abaAtiva === 'recentes'">
+                <i class="bi bi-clock-history"></i>
+                <h2>Nenhum lançamento recente</h2>
+                <p>Quando um título for compartilhado, ele aparecerá nesta aba.</p>
+            </section>
+
+            <!-- MEMBROS -->
+
+            <section class="lista-membros" *ngIf="abaAtiva === 'membros'">
+
+                <div class="membro" *ngFor="let membro of grupo.membros">
+                    <div class="avatar-membro">{{ membro.nome.charAt(0).toUpperCase() }}</div>
+                    <span>{{ membro.nome }}</span>
+                </div>
+
+            </section>
+
+        </ng-container>
+
+    </main>
+
+</div>

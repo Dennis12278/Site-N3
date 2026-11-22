@@ -461,6 +461,12 @@ export class VisualizarPublicacao implements OnInit, OnDestroy {
 
   comecarLeitura(): void {
 
+    // se a publicação tem arquivo (PDF ou TXT), abre o leitor
+    if (this.publicacao?.arquivoLeitura) {
+      this.router.navigate(['/leitor', this.publicacao.id]);
+      return;
+    }
+
     const usuario = SessaoService.usuario();
 
     // só marca como Lendo se a publicação ainda não tem marcador

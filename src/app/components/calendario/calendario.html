@@ -1,405 +1,269 @@
-<div class="calendario-page">
+<div class="cal-page">
 
-  <!-- =========================================
-       MENU LATERAL
-  ========================================= -->
+    <!-- ===== LATERAL: CALENDÁRIO PEQUENO ===== -->
 
-  <aside class="profile-sidebar">
+    <aside class="cal-lateral">
 
-    <button
-      type="button"
-      class="sidebar-item"
-      (click)="irParaMeuPerfil()"
-    >
-      <i class="bi bi-person"></i>
-      <span>Editar Perfil</span>
-    </button>
+        <div class="cal-titulo">Calendário</div>
 
-    <button
-      type="button"
-      class="sidebar-item"
-      (click)="irParaTitulosSeguidos()"
-    >
-      <i class="bi bi-bookmark"></i>
-      <span>Títulos Seguidos</span>
-    </button>
+        <div class="mini-topo">
 
-    <button
-      type="button"
-      class="sidebar-item"
-      (click)="irParaUsuariosSeguidos()"
-    >
-      <i class="bi bi-person-plus"></i>
-      <span>Usuários Seguidos</span>
-    </button>
+            <span>{{ nomeMesMini }} {{ anoMesMini }}</span>
 
-    <button
-      type="button"
-      class="sidebar-item"
-      (click)="irParaGruposSeguidos()"
-    >
-      <i class="bi bi-people"></i>
-      <span>Grupos Seguidos</span>
-    </button>
-
-    <button
-      type="button"
-      class="sidebar-item"
-      (click)="irParaHistorico()"
-    >
-      <i class="bi bi-clock-history"></i>
-      <span>Histórico de Leitura</span>
-    </button>
-
-    <button
-      type="button"
-      class="sidebar-item"
-      (click)="irParaColecoes()"
-    >
-      <i class="bi bi-collection"></i>
-      <span>Coleções</span>
-    </button>
-
-    <button
-      type="button"
-      class="sidebar-item"
-      (click)="irParaNotificacoes()"
-    >
-      <i class="bi bi-bell"></i>
-      <span>Notificações</span>
-    </button>
-
-    <button
-      type="button"
-      class="sidebar-item"
-      (click)="irParaMinhasPublicacoes()"
-    >
-      <i class="bi bi-file-earmark-text"></i>
-      <span>Minhas Publicações</span>
-    </button>
-
-    <button
-      type="button"
-      class="sidebar-item"
-      (click)="irParaConfiguracoes()"
-    >
-      <i class="bi bi-gear"></i>
-      <span>Configurações</span>
-    </button>
-
-  </aside>
-
-
-  <!-- =========================================
-       CONTEÚDO
-  ========================================= -->
-
-  <main class="calendario-content">
-
-    <div class="calendario-header">
-
-      <h1>Calendário</h1>
-
-      <p>
-        Organize seus horários e programe suas atividades de estudo.
-      </p>
-
-    </div>
-
-
-    <!-- =========================================
-         MESES
-    ========================================= -->
-
-    <section class="meses-section">
-
-      <div class="meses-header">
-
-        <h2>
-          {{ anoSelecionado }}
-        </h2>
-
-      </div>
-
-
-      <div class="meses-list">
-
-        <button
-          *ngFor="let mes of meses; let i = index"
-          type="button"
-          class="mes"
-          [class.active]="mesSelecionado === i"
-          (click)="selecionarMes(i)"
-        >
-          {{ mes }}
-        </button>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================================
-         SEMANA
-    ========================================= -->
-
-    <section class="semana-section">
-
-      <div class="semana-topo">
-
-        <div>
-
-          <h2>Semana</h2>
-
-          <span>
-            {{ textoSemana }}
-          </span>
-
-        </div>
-
-
-        <div class="semana-navegacao">
-
-          <button
-            type="button"
-            class="nav-button"
-            title="Semana anterior"
-            (click)="semanaAnterior()"
-          >
-            <i class="bi bi-chevron-left"></i>
-          </button>
-
-
-          <button
-            type="button"
-            class="hoje-button"
-            (click)="irParaHoje()"
-          >
-            Hoje
-          </button>
-
-
-          <button
-            type="button"
-            class="nav-button"
-            title="Próxima semana"
-            (click)="proximaSemana()"
-          >
-            <i class="bi bi-chevron-right"></i>
-          </button>
-
-        </div>
-
-      </div>
-
-
-      <!-- =========================================
-           GRADE
-      ========================================= -->
-
-      <div class="semana-scroll">
-
-        <div class="semana-calendar">
-
-
-          <!-- HORÁRIOS -->
-
-          <div class="horarios">
-
-            <div class="horario-vazio"></div>
-
-            <div
-              class="horario"
-              *ngFor="let horario of horarios"
-            >
-              {{ horario }}
+            <div>
+                <button type="button" (click)="moverMiniMes(-1)" title="Mês anterior">
+                    <i class="bi bi-chevron-up"></i>
+                </button>
+                <button type="button" (click)="moverMiniMes(1)" title="Próximo mês">
+                    <i class="bi bi-chevron-down"></i>
+                </button>
             </div>
 
-          </div>
-
-
-          <!-- DIAS -->
-
-          <div
-            class="dia"
-            *ngFor="let dia of diasSemana"
-            [class.dia-hoje]="ehHoje(dia.data)"
-            [class.dia-feriado]="obterFeriado(dia.data)"
-          >
-
-
-            <!-- CABEÇALHO -->
-
-            <div class="dia-header">
-
-              <strong>
-                {{ dia.nome }}
-              </strong>
-
-              <span>
-                {{ dia.numero }}
-              </span>
-
-            </div>
-
-
-            <!-- FERIADO -->
-
-            <div
-              class="feriado"
-              *ngIf="obterFeriado(dia.data) as feriado"
-              [title]="feriado"
-            >
-
-              <i class="bi bi-calendar-event"></i>
-
-              <span>
-                {{ feriado }}
-              </span>
-
-            </div>
-
-
-            <!-- 24 HORAS -->
-
-            <div
-              class="horario-cell"
-              *ngFor="let horario of horarios"
-              [class.horario-selecionado]="
-                diaSelecionado?.data?.getTime() === dia.data.getTime()
-                && horarioSelecionado === horario
-              "
-              [class.tem-lembrete]="obterLembrete(dia, horario)"
-              [title]="
-                obterLembrete(dia, horario)
-                  || dia.nome + ' - ' + horario
-              "
-              (click)="selecionarHorario(dia, horario)"
-            >
-
-              <span
-                class="texto-lembrete"
-                *ngIf="obterLembrete(dia, horario)"
-              >
-                {{ obterLembrete(dia, horario) }}
-              </span>
-
-            </div>
-
-          </div>
-
         </div>
 
-      </div>
+        <div class="mini-grade">
 
-    </section>
-
-
-    <!-- =========================================
-         FORMULÁRIO DE LEMBRETE
-    ========================================= -->
-
-    <div
-      class="lembrete-overlay"
-      *ngIf="mostrarLembrete"
-      (click)="fecharLembrete()"
-    >
-
-      <div
-        class="lembrete-card"
-        (click)="$event.stopPropagation()"
-      >
-
-        <div class="lembrete-header">
-
-          <div>
-
-            <h2>
-              Lembrete
-            </h2>
-
-            <p *ngIf="diaSelecionado">
-
-              {{ diaSelecionado.nome }}
-              {{ diaSelecionado.numero }}
-              ·
-              {{ horarioSelecionado }}
-
-            </p>
-
-          </div>
-
-          <button
-            type="button"
-            class="fechar-button"
-            (click)="fecharLembrete()"
-          >
-            <i class="bi bi-x-lg"></i>
-          </button>
-
-        </div>
-
-
-        <div class="lembrete-form">
-
-          <label for="descricaoLembrete">
-            Atividade ou lembrete
-          </label>
-
-          <textarea
-            id="descricaoLembrete"
-            rows="4"
-            [value]="descricaoLembrete"
-            (input)="descricaoLembrete = $any($event.target).value"
-            placeholder="Ex.: Estudar para a prova de matemática..."
-          ></textarea>
-
-        </div>
-
-
-        <div class="lembrete-acoes">
-
-          <button
-            type="button"
-            class="botao-excluir"
-            *ngIf="
-              diaSelecionado &&
-              obterLembrete(diaSelecionado, horarioSelecionado)
-            "
-            (click)="excluirLembrete()"
-          >
-            <i class="bi bi-trash"></i>
-            Excluir
-          </button>
-
-
-          <div class="acoes-direita">
+            <span class="mini-letra" *ngFor="let letra of letrasSemana">{{ letra }}</span>
 
             <button
-              type="button"
-              class="botao-cancelar"
-              (click)="fecharLembrete()"
+                type="button"
+                class="mini-dia"
+                *ngFor="let d of diasMini"
+                [class.fora]="d.getMonth() !== mesMini.getMonth()"
+                [class.hoje]="ehHoje(d)"
+                [class.selecionado]="ehSelecionado(d)"
+                [class.feriado]="mostrarFeriados && temFeriado(d)"
+                (click)="selecionarDia(d)"
             >
-              Cancelar
+                {{ d.getDate() }}
             </button>
-
-            <button
-              type="button"
-              class="botao-salvar"
-              (click)="salvarLembrete()"
-            >
-              <i class="bi bi-check-lg"></i>
-              Salvar
-            </button>
-
-          </div>
 
         </div>
 
-      </div>
+    </aside>
+
+
+    <!-- ===== PRINCIPAL ===== -->
+
+    <main class="cal-principal">
+
+        <!-- BARRA SUPERIOR -->
+
+        <header class="cal-barra">
+
+            <div class="barra-esquerda">
+
+                <button type="button" class="botao-hoje" (click)="hoje()">Hoje</button>
+
+                <button type="button" class="icone" (click)="mover(-1)" title="Anterior">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+
+                <button type="button" class="icone" (click)="mover(1)" title="Próximo">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+
+                <span class="periodo">{{ textoPeriodo }}</span>
+
+            </div>
+
+            <div class="barra-direita">
+
+                <button
+                    type="button"
+                    class="botao-feriados"
+                    [class.ativo]="mostrarFeriados"
+                    (click)="alternarFeriados()"
+                    title="Mostrar feriados nacionais"
+                >
+                    <i class="bi bi-calendar-event"></i>
+                    Feriados
+                </button>
+
+                <select class="seletor-visao" [(ngModel)]="visao">
+                    <option value="dia">Dia</option>
+                    <option value="semana">Semana</option>
+                    <option value="mes">Mês</option>
+                </select>
+
+                <button
+                    type="button"
+                    class="botao-novo"
+                    (click)="novoEventoEm(dataSelecionada, proximaHora())"
+                >
+                    <i class="bi bi-plus-lg"></i>
+                    Novo
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- VISÃO DE DIA / SEMANA -->
+
+        <section class="grade-tempo" *ngIf="visao !== 'mes'">
+
+            <div class="cabecalho-dias" [style.--colunas]="diasVisiveis.length">
+
+                <div class="canto"></div>
+
+                <div
+                    class="cabecalho-dia"
+                    *ngFor="let d of diasVisiveis"
+                    [class.hoje]="ehHoje(d)"
+                >
+                    <span class="numero-dia">{{ d.getDate() }}</span>
+                    <span class="nome-dia">{{ nomeDia(d) }}</span>
+                    <span class="feriado-nome" *ngIf="feriadoDoDia(d) as feriado">{{ feriado }}</span>
+                </div>
+
+            </div>
+
+            <div class="corpo-tempo" [style.--colunas]="diasVisiveis.length">
+
+                <div class="coluna-horas">
+                    <div class="rotulo-hora" *ngFor="let h of horas">{{ h }}</div>
+                </div>
+
+                <div class="coluna-dia" *ngFor="let d of diasVisiveis">
+
+                    <div
+                        class="slot"
+                        *ngFor="let h of horas"
+                        (click)="novoEventoEm(d, h)"
+                    ></div>
+
+                    <button
+                        type="button"
+                        class="evento"
+                        *ngFor="let e of eventosDoDia(d)"
+                        [ngStyle]="estiloEvento(e)"
+                        (click)="editarEvento(e, $event)"
+                    >
+                        <strong>{{ e.titulo }}</strong>
+                        <span>{{ hora(e.inicio) }} – {{ hora(e.fim) }}</span>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- VISÃO DE MÊS -->
+
+        <section class="grade-mes" *ngIf="visao === 'mes'">
+
+            <div class="cabecalho-mes">
+                <span *ngFor="let nome of ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']">{{ nome }}</span>
+            </div>
+
+            <div class="corpo-mes">
+
+                <div
+                    class="celula-mes"
+                    *ngFor="let d of diasMini"
+                    [class.fora]="d.getMonth() !== dataSelecionada.getMonth()"
+                    (click)="novoEventoEm(d, 9)"
+                >
+
+                    <span class="numero-mes" [class.hoje]="ehHoje(d)">{{ d.getDate() }}</span>
+
+                    <span class="feriado-mes" *ngIf="feriadoDoDia(d) as feriado">{{ feriado }}</span>
+
+                    <button
+                        type="button"
+                        class="evento-mes"
+                        *ngFor="let e of eventosDoDia(d)"
+                        (click)="editarEvento(e, $event)"
+                    >
+                        {{ e.titulo }}
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- ===== MODAL: NOVO / EDITAR EVENTO ===== -->
+
+    <div class="modal-fundo" *ngIf="modalAberto" (click)="fecharModal()">
+
+        <div class="modal" (click)="$event.stopPropagation()">
+
+            <header class="modal-topo">
+
+                <h2>{{ rascunho.id === null ? 'Novo evento' : 'Editar evento' }}</h2>
+
+                <button type="button" class="icone" (click)="fecharModal()" title="Fechar">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+
+            </header>
+
+            <div class="modal-corpo">
+
+                <div class="campo">
+                    <label>Título</label>
+                    <input type="text" [(ngModel)]="rascunho.titulo" placeholder="Adicionar título">
+                </div>
+
+                <div class="linha-campos">
+
+                    <div class="campo">
+                        <label>Data</label>
+                        <input type="date" [(ngModel)]="rascunho.data">
+                    </div>
+
+                    <div class="campo">
+                        <label>Início</label>
+                        <input type="time" [(ngModel)]="rascunho.horaInicio">
+                    </div>
+
+                    <div class="campo">
+                        <label>Término</label>
+                        <input type="time" [(ngModel)]="rascunho.horaFim">
+                    </div>
+
+                </div>
+
+                <div class="campo">
+                    <label>Detalhes</label>
+                    <textarea rows="4" [(ngModel)]="rascunho.detalhes" placeholder="Adicionar detalhes"></textarea>
+                </div>
+
+            </div>
+
+            <footer class="modal-rodape">
+
+                <button
+                    type="button"
+                    class="botao-excluir"
+                    *ngIf="rascunho.id !== null"
+                    (click)="excluirEvento()"
+                >
+                    Excluir
+                </button>
+
+                <span class="espaco"></span>
+
+                <button type="button" class="botao-cancelar" (click)="fecharModal()">Cancelar</button>
+
+                <button type="button" class="botao-salvar" (click)="salvarEvento()">
+                    <i class="bi bi-save"></i>
+                    Salvar
+                </button>
+
+            </footer>
+
+        </div>
 
     </div>
-
-  </main>
 
 </div>

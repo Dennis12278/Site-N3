@@ -197,11 +197,11 @@ export class ApiService {
     return this.http.get<any[]>(this.apiUrl + '/Calendario?idUsuario=' + idUsuario);
   }
 
-  criarCalendario(dados: { idUsuario: number; data: string; descricao: string }) {
+  criarCalendario(dados: any) {
     return this.http.post<any>(this.apiUrl + '/Calendario', dados);
   }
 
-  editarCalendario(dados: { id: number; idUsuario: number; data: string; descricao: string }) {
+  editarCalendario(dados: any) {
     return this.http.put(this.apiUrl + '/Calendario', dados);
   }
 
@@ -276,6 +276,26 @@ export class ApiService {
 
   obterArquivoLeitura(idDocumento: number) {
     return this.http.get(this.apiUrl + '/Leitura/' + idDocumento + '/Arquivo', { responseType: 'blob' });
+  }
+
+  /* =========================================
+     CRIAR E SEGUIR GRUPOS
+  ========================================= */
+
+  criarGrupo(dados: { nome: string; descricao: string; idUsuario: number }) {
+    return this.http.post<any>(this.apiUrl + '/GrupoCriacao/Criar', dados);
+  }
+
+  obterGrupo(id: number, idUsuario: number) {
+    return this.http.get<any>(this.apiUrl + '/GrupoCriacao/' + id + '?idUsuario=' + idUsuario);
+  }
+
+  seguirGrupo(id: number, idUsuario: number) {
+    return this.http.post(this.apiUrl + '/GrupoCriacao/' + id + '/Seguir?idUsuario=' + idUsuario, {});
+  }
+
+  deixarGrupo(id: number, idUsuario: number) {
+    return this.http.delete(this.apiUrl + '/GrupoCriacao/' + id + '/Seguir?idUsuario=' + idUsuario);
   }
 
   listarGruposSeguidos(idUsuario: number) {

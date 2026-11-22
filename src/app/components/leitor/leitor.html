@@ -1,0 +1,453 @@
+<div class="leitor-page" [class.modo-txt]="tipo === 'txt' && !semArquivo">
+
+    <!-- BARRA DO TOPO (some ao descer a página) -->
+
+    <header class="leitor-topo" [class.oculta]="!barraVisivel">
+
+        <button type="button" class="botao-voltar" (click)="voltar()">
+            <i class="bi bi-arrow-left"></i>
+            Voltar
+        </button>
+
+        <div class="titulo-leitura" *ngIf="publicacao">
+            <strong>{{ publicacao.titulo }}</strong>
+        </div>
+
+        <!-- NAVEGAÇÃO ENTRE OS TÍTULOS DA COLEÇÃO -->
+
+        <div class="paginador" *ngIf="temColecao">
+
+            <button
+                type="button"
+                class="seta"
+                [disabled]="!tituloAnterior"
+                (click)="irParaTitulo(tituloAnterior)"
+                title="Título anterior"
+            >
+                <i class="bi bi-chevron-left"></i>
+            </button>
+
+            <span class="contador-titulo">
+                <b>{{ posicaoAtual + 1 }}</b> / {{ itensColecao.length }}
+            </span>
+
+            <button
+                type="button"
+                class="seta"
+                [disabled]="!proximoTitulo"
+                (click)="irParaTitulo(proximoTitulo)"
+                title="Próximo título"
+            >
+                <i class="bi bi-chevron-right"></i>
+            </button>
+
+        </div>
+
+        <div class="progresso-barra" *ngIf="tipo === 'txt' && !semArquivo && !temColecao">
+            <div class="progresso-preenchido" [style.width.%]="progresso"></div>
+        </div>
+
+    </header>
+
+
+    <!-- LATERAL DIREITA (também some junto) -->
+
+    <aside class="leitor-lateral" [class.oculta]="!barraVisivel">
+
+        <button type="button" (click)="irParaHome()" title="Início">
+            <i class="bi bi-house"></i>
+        </button>
+
+        <button type="button" (click)="voltar()" title="Publicação">
+            <i class="bi bi-book"></i>
+        </button>
+
+        <button
+            type="button"
+            *ngIf="temColecao"
+            (click)="abrirPainel('colecao')"
+            title="Coleção"
+        >
+            <i class="bi bi-list-ul"></i>
+        </button>
+
+        <button type="button" (click)="alternarTelaCheia()" title="Tela cheia">
+            <i class="bi bi-arrows-fullscreen"></i>
+        </button>
+
+        <button type="button" (click)="abrirPainel('config')" title="Configurações">
+            <i class="bi bi-gear"></i>
+        </button>
+
+        <button type="button" (click)="abrirPainel('ajuda')" title="Ajuda">
+            <i class="bi bi-question-circle"></i>
+        </button>
+
+    </aside>
+
+
+    <!-- ===== PAINEL: COLEÇÃO (lista de títulos) ===== -->
+
+    <div class="painel-fundo" *ngIf="painelAberto" (click)="fecharPainel()"></div>
+
+    <aside class="painel-leitor painel-colecao" *ngIf="painelAberto === 'colecao'">
+
+        <header class="painel-cabecalho">
+
+            <h2>Coleção</h2>
+
+            <button type="button" class="painel-fechar" (click)="fecharPainel()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+
+        </header>
+
+        <div class="painel-busca-linha">
+
+            <div class="painel-pesquisa">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Pesquisar título..." [(ngModel)]="pesquisaColecao">
+            </div>
+
+            <select class="painel-select" [(ngModel)]="filtroUsuario">
+                <option value="todos">Todos os usuários</option>
+                <option *ngFor="let nome of autoresColecao" [value]="nome">{{ nome }}</option>
+            </select>
+
+        </div>
+
+        <div class="painel-abas">
+
+            <button
+                type="button"
+                [class.ativa]="ordenacaoPainel === 'titulo'"
+                (click)="ordenacaoPainel = 'titulo'"
+            >
+                <i class="bi bi-arrow-down"></i>
+                Título
+            </button>
+
+            <button
+                type="button"
+                [class.ativa]="ordenacaoPainel === 'data'"
+                (click)="ordenacaoPainel = 'data'"
+            >
+                Data
+            </button>
+
+        </div>
+
+        <div class="painel-lista">
+
+            <button
+                type="button"
+                class="item-painel"
+                *ngFor="let item of itensPainel"
+                [class.atual]="item.id === id"
+                (click)="irParaTitulo(item)"
+            >
+
+                <strong>{{ item.titulo }}</strong>
+
+                <span>
+                    {{ item.nomeUsuario }}
+                    · {{ tempoAtras(item.dataPublicacao) }}
+                </span>
+
+            </button>
+
+            <p class="painel-vazio" *ngIf="itensPainel.length === 0">
+                Nenhum título encontrado.
+            </p>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ===== PAINEL: CONFIGURAÇÕES ===== -->
+
+    <aside class="painel-leitor painel-config" *ngIf="painelAberto === 'config'">
+
+        <header class="painel-cabecalho">
+
+            <h2>Configurações</h2>
+
+            <button type="button" class="painel-fechar" (click)="fecharPainel()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+
+        </header>
+
+        <div class="painel-secao">
+
+            <span class="painel-rotulo">OCULTAR CONTROLES</span>
+
+            <p class="painel-explicacao">
+                Escolha como esconder a barra do topo e a lateral.
+            </p>
+
+            <div class="painel-opcoes">
+
+                <button
+                    type="button"
+                    [class.ativa]="modoOcultar === 'simples'"
+                    (click)="definirModoOcultar('simples')"
+                >
+                    <i class="bi" [class.bi-record-circle]="modoOcultar === 'simples'" [class.bi-circle]="modoOcultar !== 'simples'"></i>
+                    Toque simples
+                </button>
+
+                <button
+                    type="button"
+                    [class.ativa]="modoOcultar === 'duplo'"
+                    (click)="definirModoOcultar('duplo')"
+                >
+                    <i class="bi" [class.bi-record-circle]="modoOcultar === 'duplo'" [class.bi-circle]="modoOcultar !== 'duplo'"></i>
+                    Toque duplo
+                </button>
+
+            </div>
+
+            <p class="painel-dica">
+                Com <b>toque simples</b>, um clique na página esconde ou mostra a barra.
+                Com <b>toque duplo</b>, é preciso dar dois cliques.
+            </p>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ===== PAINEL: AJUDA (explica os ícones e os atalhos) ===== -->
+
+    <aside class="painel-leitor painel-ajuda" *ngIf="painelAberto === 'ajuda'">
+
+        <header class="painel-cabecalho">
+
+            <h2>Ajuda</h2>
+
+            <button type="button" class="painel-fechar" (click)="fecharPainel()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+
+        </header>
+
+        <div class="painel-secao">
+
+            <span class="painel-rotulo">ÍCONES</span>
+
+            <ul class="painel-lista-ajuda">
+
+                <li>
+                    <i class="bi bi-house"></i>
+                    <div><strong>Início</strong><span>Volta para a página inicial.</span></div>
+                </li>
+
+                <li>
+                    <i class="bi bi-book"></i>
+                    <div><strong>Publicação</strong><span>Abre a página da publicação que você está lendo.</span></div>
+                </li>
+
+                <li>
+                    <i class="bi bi-list-ul"></i>
+                    <div><strong>Coleção</strong><span>Mostra os títulos da coleção, com filtros por usuário e por título ou data.</span></div>
+                </li>
+
+                <li>
+                    <i class="bi bi-arrows-fullscreen"></i>
+                    <div><strong>Tela cheia</strong><span>Deixa a leitura ocupando a tela inteira.</span></div>
+                </li>
+
+                <li>
+                    <i class="bi bi-gear"></i>
+                    <div><strong>Configurações</strong><span>Escolhe como esconder a barra (toque simples ou duplo).</span></div>
+                </li>
+
+                <li>
+                    <i class="bi bi-question-circle"></i>
+                    <div><strong>Ajuda</strong><span>Explica os ícones e os atalhos do teclado.</span></div>
+                </li>
+
+            </ul>
+
+        </div>
+
+        <div class="painel-secao">
+
+            <span class="painel-rotulo">ATALHOS</span>
+
+            <ul class="painel-atalhos">
+
+                <li><kbd>←</kbd> <kbd>→</kbd><span>Título anterior e próximo</span></li>
+                <li><kbd>F</kbd><span>Tela cheia</span></li>
+                <li><kbd>H</kbd><span>Ir para o início</span></li>
+                <li><kbd>C</kbd><span>Abrir a lista da coleção</span></li>
+                <li><kbd>Esc</kbd><span>Fechar o painel aberto</span></li>
+
+            </ul>
+
+        </div>
+
+    </aside>
+
+
+    <main
+        class="leitor-conteudo"
+        (click)="cliqueConteudo($event)"
+        (dblclick)="duploCliqueConteudo($event)"
+    >
+
+        <div class="carregando" *ngIf="carregando">Carregando...</div>
+
+
+        <!-- SEM ARQUIVO -->
+
+        <section class="sem-arquivo" *ngIf="!carregando && semArquivo">
+
+            <i class="bi bi-file-earmark-text"></i>
+
+            <h2>Esta publicação ainda não tem arquivo de leitura.</h2>
+
+            <p *ngIf="!souDono">Peça ao autor para enviar um PDF ou TXT.</p>
+
+            <button type="button" class="botao-nav" (click)="voltar()">
+                Ver a publicação
+            </button>
+
+        </section>
+
+
+        <!-- PDF -->
+
+        <section class="area-pdf" *ngIf="!carregando && !semArquivo && tipo === 'pdf'">
+
+            <iframe
+                *ngIf="pdfUrl"
+                class="pdf-visualizador"
+                [src]="pdfUrl"
+                title="Leitura em PDF"
+            ></iframe>
+
+            <div class="acoes-leitura">
+
+                <button
+                    type="button"
+                    class="botao-concluir"
+                    [disabled]="progresso === 100"
+                    (click)="concluirLeitura()"
+                >
+                    <i class="bi bi-check2-circle"></i>
+                    {{ progresso === 100 ? 'Leitura concluída' : 'Concluir leitura' }}
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- TXT: folha branca, letras pretas -->
+
+        <article class="area-texto" *ngIf="!carregando && !semArquivo && tipo === 'txt'">
+
+            <div class="texto-leitura">{{ textoTxt }}</div>
+
+
+        </article>
+
+
+        <!-- RODAPÉ DA LEITURA: progresso, título, início e navegação -->
+
+        <section class="rodape-leitura" *ngIf="!carregando && !semArquivo">
+
+            <div class="cartao-rodape">
+
+                <div class="caixa-progresso">
+                    <i class="bi bi-check2"></i>
+                    <span>{{ progresso }}%</span>
+                </div>
+
+                <div class="info-rodape">
+
+                    <strong>{{ publicacao?.titulo }}</strong>
+
+                    <span *ngIf="temColecao">
+                        {{ tituloColecao }} · Título {{ posicaoAtual + 1 }} de {{ itensColecao.length }}
+                    </span>
+
+                    <span *ngIf="!temColecao">
+                        Publicado em {{ publicacao?.dataPublicacao | date:'dd/MM/yyyy' }}
+                    </span>
+
+                </div>
+
+                <button type="button" class="botao-inicio" (click)="irParaHome()" title="Início">
+                    <i class="bi bi-house"></i>
+                </button>
+
+            </div>
+
+            <div class="navegacao-rodape" *ngIf="temColecao">
+
+                <button
+                    type="button"
+                    class="botao-anterior-proximo"
+                    [disabled]="!tituloAnterior"
+                    (click)="irParaTitulo(tituloAnterior)"
+                >
+                    <i class="bi bi-chevron-left"></i>
+                    <span>
+                        <small>Prev</small>
+                        {{ tituloAnterior ? tituloAnterior.titulo : 'Início da coleção' }}
+                    </span>
+                </button>
+
+                <button
+                    type="button"
+                    class="botao-anterior-proximo"
+                    [disabled]="!proximoTitulo"
+                    (click)="irParaTitulo(proximoTitulo)"
+                >
+                    <span>
+                        <small>Next</small>
+                        {{ proximoTitulo ? proximoTitulo.titulo : 'Fim da coleção' }}
+                    </span>
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+
+            </div>
+
+        </section>
+
+        <!-- ENVIO DO ARQUIVO (só o dono) -->
+
+        <section class="envio-arquivo" *ngIf="!carregando && souDono">
+
+            <h3>{{ semArquivo ? 'Enviar arquivo de leitura' : 'Trocar arquivo de leitura' }}</h3>
+
+            <p>PDF ou TXT, até 20 MB.</p>
+
+            <div class="linha-envio">
+
+                <input
+                    type="file"
+                    accept=".pdf,.txt"
+                    (change)="aoEscolherArquivo($event)"
+                >
+
+                <button
+                    type="button"
+                    class="botao-enviar"
+                    [disabled]="!arquivoSelecionado || enviandoArquivo"
+                    (click)="enviarArquivo()"
+                >
+                    {{ enviandoArquivo ? 'Enviando...' : 'Enviar' }}
+                </button>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>

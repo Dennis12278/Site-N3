@@ -146,8 +146,11 @@ export class ColecaoDetalhe implements OnInit {
     this.router.navigate(['/colecao', this.colecao.id, 'editar']);
   }
 
+  // abre o leitor com a coleção, para navegar entre os títulos
   abrirItem(item: any): void {
-    this.router.navigate(['/publicacao', item.id]);
+    this.router.navigate(['/leitor', item.id], {
+      queryParams: { colecao: this.colecao.id }
+    });
   }
 
   voltar(): void {

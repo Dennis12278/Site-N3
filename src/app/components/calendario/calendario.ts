@@ -1,160 +1,118 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { SessaoService } from '../../services/sessao.service';
 
-interface DiaSemana {
-  nome: string;
-  numero: number;
-  data: Date;
-}
+type Visao = 'dia' | 'semana' | 'mes';
 
-interface Feriado {
-  data: string;
-  nome: string;
-}
-
-interface Lembrete {
+interface Evento {
   id: number;
-  data: string;
-  horario: string;
-  descricao: string;
+  titulo: string;
+  detalhes: string;
+  inicio: Date;
+  fim: Date;
 }
+
+interface Rascunho {
+  id: number | null;
+  titulo: string;
+  detalhes: string;
+  data: string;
+  horaInicio: string;
+  horaFim: string;
+}
+
+const NOMES_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+const NOMES_DIAS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira',
+  'Quinta-feira', 'Sexta-feira', 'Sábado'];
+
+const LETRAS_SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+
+// feriados nacionais fixos (mês-dia)
+const FERIADOS_FIXOS: { data: string; nome: string }[] = [
+  { data: '01-01', nome: 'Confraternização Universal' },
+  { data: '04-21', nome: 'Tiradentes' },
+  { data: '05-01', nome: 'Dia do Trabalho' },
+  { data: '09-07', nome: 'Independência do Brasil' },
+  { data: '10-12', nome: 'Nossa Senhora Aparecida' },
+  { data: '11-02', nome: 'Finados' },
+  { data: '11-15', nome: 'Proclamação da República' },
+  { data: '11-20', nome: 'Dia da Consciência Negra' },
+  { data: '12-25', nome: 'Natal' }
+];
 
 @Component({
   selector: 'app-calendario',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './calendario.html',
   styleUrl: './calendario.css'
 })
-export class Calendario {
+export class Calendario implements OnInit {
 
-  /* =========================================
-     MESES
-  ========================================= */
+  horas: number[] = Array.from({ length: 24 }, (_, i) => i);
 
-  meses: string[] = [
-    'Janeiro',
-    'Fevereiro',
-    'Março',
-    'Abril',
-    'Maio',
-    'Junho',
-    'Julho',
-    'Agosto',
-    'Setembro',
-    'Outubro',
-    'Novembro',
-    'Dezembro'
-  ];
+  letrasSemana = LETRAS_SEMANA;
 
-  mesSelecionado: number = new Date().getMonth();
+  // 1 minuto = 1 pixel (cada hora tem 60px)
+  readonly pxPorMinuto = 1;
 
-  anoAtual: number = new Date().getFullYear();
+  dataSelecionada = new Date();
 
-  anoSelecionado: number = this.anoAtual;
+  // mês mostrado no calendário pequeno (à esquerda)
+  mesMini = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
+  visao: Visao = 'semana';
 
-  /* =========================================
-     SEMANA
-  ========================================= */
+  eventos: Evento[] = [];
 
-  semanaAtual: Date = this.obterInicioSemana(new Date());
+  modalAberto = false;
 
-  diasSemana: DiaSemana[] = [];
+  rascunho: Rascunho = this.novoRascunho(new Date());
 
-
-  /* =========================================
-     HORÁRIOS
-  ========================================= */
-
-  horarios: string[] = [];
-
-
-  /* =========================================
-     LEMBRETES (salvos na API)
-  ========================================= */
-
-  lembretes: Lembrete[] = [];
-
-  diaSelecionado: DiaSemana | null = null;
-
-  horarioSelecionado: string = '';
-
-  descricaoLembrete: string = '';
-
-  mostrarLembrete: boolean = false;
-
-  salvando: boolean = false;
-
-
-  /* =========================================
-     CONSTRUTOR
-  ========================================= */
+  // feriados: ligado ou desligado pelo botão (fica salvo no navegador)
+  mostrarFeriados = false;
 
   constructor(
-    private router: Router,
     private apiService: ApiService,
     private changeDetectorRef: ChangeDetectorRef
-  ) {
+  ) {}
 
-    this.gerarHorarios();
+  ngOnInit(): void {
+    this.mostrarFeriados = localStorage.getItem('dream_feriados') === 'sim';
+    this.carregarEventos();
+  }
 
-    this.atualizarSemana();
+  // ===== FERIADOS =====
 
-    this.carregarLembretes();
+  alternarFeriados(): void {
+    this.mostrarFeriados = !this.mostrarFeriados;
+    localStorage.setItem('dream_feriados', this.mostrarFeriados ? 'sim' : 'nao');
+  }
+
+  feriadoDoDia(d: Date): string | null {
+
+    if (!this.mostrarFeriados) {
+      return null;
+    }
+
+    const mesDia = String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const feriado = FERIADOS_FIXOS.find(f => f.data === mesDia);
+
+    return feriado ? feriado.nome : null;
 
   }
 
-
-  /* =========================================
-     NAVEGAÇÃO
-  ========================================= */
-
-  irParaMeuPerfil(): void {
-    this.router.navigate(['/meu-perfil']);
+  temFeriado(d: Date): boolean {
+    return this.feriadoDoDia(d) !== null;
   }
 
-  irParaTitulosSeguidos(): void {
-    this.router.navigate(['/titulos-seguidos']);
-  }
+  // ===== DADOS =====
 
-  irParaUsuariosSeguidos(): void {
-    this.router.navigate(['/usuarios-seguidos']);
-  }
-
-  irParaGruposSeguidos(): void {
-    this.router.navigate(['/grupos-seguidos']);
-  }
-
-  irParaHistorico(): void {
-    this.router.navigate(['/historico-leitura']);
-  }
-
-  irParaColecoes(): void {
-    this.router.navigate(['/colecoes']);
-  }
-
-  irParaNotificacoes(): void {
-    this.router.navigate(['/notificacoes']);
-  }
-
-  irParaMinhasPublicacoes(): void {
-    this.router.navigate(['/minhas-publicacoes']);
-  }
-
-  irParaConfiguracoes(): void {
-    this.router.navigate(['/configuracoes']);
-  }
-
-
-  /* =========================================
-     CARREGAR LEMBRETES DA API
-  ========================================= */
-
-  carregarLembretes(): void {
+  carregarEventos(): void {
 
     const usuario = SessaoService.usuario();
 
@@ -166,16 +124,19 @@ export class Calendario {
 
       next: itens => {
 
-        // a API devolve em UTC; new Date() converte para o horário local
-        this.lembretes = itens.map(item => {
+        this.eventos = itens.map(item => {
 
-          const dataHora = new Date(item.data);
+          const inicio = new Date(item.data);
+          const fim = item.dataFim
+            ? new Date(item.dataFim)
+            : new Date(inicio.getTime() + 30 * 60000);
 
           return {
             id: item.id,
-            data: this.formatarData(dataHora),
-            horario: dataHora.getHours().toString().padStart(2, '0') + ':00',
-            descricao: item.descricao
+            titulo: item.descricao,
+            detalhes: item.detalhes ?? '',
+            inicio,
+            fim
           };
 
         });
@@ -184,483 +145,226 @@ export class Calendario {
 
       },
 
-      error: erro => {
-        console.error('Erro ao carregar calendário:', erro);
-      }
+      error: erro => console.error('Erro ao carregar calendário:', erro)
 
     });
 
   }
 
+  // ===== DATAS =====
 
-  /* =========================================
-     GERAR HORÁRIOS
-  ========================================= */
+  private inicioDoDia(d: Date): Date {
+    const r = new Date(d);
+    r.setHours(0, 0, 0, 0);
+    return r;
+  }
 
-  gerarHorarios(): void {
+  private inicioDaSemana(d: Date): Date {
+    // a semana começa na segunda-feira
+    const r = this.inicioDoDia(d);
+    const dia = r.getDay();
+    r.setDate(r.getDate() - (dia === 0 ? 6 : dia - 1));
+    return r;
+  }
 
-    this.horarios = [];
+  private mesmoDia(a: Date, b: Date): boolean {
+    return a.getFullYear() === b.getFullYear()
+      && a.getMonth() === b.getMonth()
+      && a.getDate() === b.getDate();
+  }
 
-    for (let hora = 0; hora < 24; hora++) {
+  ehHoje(d: Date): boolean {
+    return this.mesmoDia(d, new Date());
+  }
 
-      const horario =
-        hora.toString().padStart(2, '0') + ':00';
+  ehSelecionado(d: Date): boolean {
+    return this.mesmoDia(d, this.dataSelecionada);
+  }
 
-      this.horarios.push(horario);
+  nomeDia(d: Date): string {
+    return NOMES_DIAS[d.getDay()];
+  }
 
+  hora(d: Date): string {
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  get diasVisiveis(): Date[] {
+
+    if (this.visao === 'dia') {
+      return [this.inicioDoDia(this.dataSelecionada)];
     }
 
-  }
+    const inicio = this.inicioDaSemana(this.dataSelecionada);
 
-
-  /* =========================================
-     OBTER INÍCIO DA SEMANA
-
-     Segunda-feira = primeiro dia
-  ========================================= */
-
-  obterInicioSemana(data: Date): Date {
-
-    const resultado = new Date(data);
-
-    const dia = resultado.getDay();
-
-    const diferenca =
-      dia === 0
-        ? -6
-        : 1 - dia;
-
-    resultado.setDate(
-      resultado.getDate() + diferenca
-    );
-
-    resultado.setHours(0, 0, 0, 0);
-
-    return resultado;
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(inicio);
+      d.setDate(inicio.getDate() + i);
+      return d;
+    });
 
   }
 
+  get textoPeriodo(): string {
 
-  /* =========================================
-     ATUALIZAR SEMANA
-  ========================================= */
-
-  atualizarSemana(): void {
-
-    this.diasSemana = [];
-
-    const nomes = [
-      'SEG',
-      'TER',
-      'QUA',
-      'QUI',
-      'SEX',
-      'SÁB',
-      'DOM'
-    ];
-
-    for (let i = 0; i < 7; i++) {
-
-      const data = new Date(this.semanaAtual);
-
-      data.setDate(
-        this.semanaAtual.getDate() + i
-      );
-
-      this.diasSemana.push({
-        nome: nomes[i],
-        numero: data.getDate(),
-        data: data
-      });
-
+    if (this.visao === 'mes') {
+      return `${NOMES_MESES[this.dataSelecionada.getMonth()]} de ${this.dataSelecionada.getFullYear()}`;
     }
 
-  }
+    const dias = this.diasVisiveis;
+    const primeiro = dias[0];
+    const ultimo = dias[dias.length - 1];
 
-
-  /* =========================================
-     SELECIONAR MÊS
-  ========================================= */
-
-  selecionarMes(indice: number): void {
-
-    this.mesSelecionado = indice;
-
-    const primeiroDia = new Date(
-      this.anoAtual,
-      indice,
-      1
-    );
-
-    this.semanaAtual =
-      this.obterInicioSemana(primeiroDia);
-
-    this.atualizarSemana();
-
-  }
-
-
-  /* =========================================
-     SEMANA ANTERIOR
-  ========================================= */
-
-  semanaAnterior(): void {
-
-    const novaSemana =
-      new Date(this.semanaAtual);
-
-    novaSemana.setDate(
-      novaSemana.getDate() - 7
-    );
-
-    this.semanaAtual = novaSemana;
-
-    this.atualizarSemana();
-
-    this.atualizarMesSelecionado();
-
-  }
-
-
-  /* =========================================
-     PRÓXIMA SEMANA
-  ========================================= */
-
-  proximaSemana(): void {
-
-    const novaSemana =
-      new Date(this.semanaAtual);
-
-    novaSemana.setDate(
-      novaSemana.getDate() + 7
-    );
-
-    this.semanaAtual = novaSemana;
-
-    this.atualizarSemana();
-
-    this.atualizarMesSelecionado();
-
-  }
-
-
-  /* =========================================
-     ATUALIZAR MÊS SELECIONADO
-  ========================================= */
-
-  atualizarMesSelecionado(): void {
-
-    const hoje = new Date();
-
-    const primeiraData =
-      this.diasSemana[0]?.data;
-
-    const ultimaData =
-      this.diasSemana[6]?.data;
-
-    if (!primeiraData || !ultimaData) {
-      return;
+    if (this.visao === 'dia') {
+      return `${primeiro.getDate()} de ${NOMES_MESES[primeiro.getMonth()]} de ${primeiro.getFullYear()}`;
     }
 
-    const quantidadePorMes: {
-      [mes: number]: number
-    } = {};
+    return `${primeiro.getDate()} – ${ultimo.getDate()} de ${NOMES_MESES[ultimo.getMonth()]} de ${ultimo.getFullYear()}`;
 
-    for (const dia of this.diasSemana) {
+  }
 
-      const mes = dia.data.getMonth();
+  // ===== CALENDÁRIO PEQUENO (à esquerda) =====
 
-      quantidadePorMes[mes] =
-        (quantidadePorMes[mes] || 0) + 1;
+  get nomeMesMini(): string {
+    return NOMES_MESES[this.mesMini.getMonth()];
+  }
 
+  get anoMesMini(): number {
+    return this.mesMini.getFullYear();
+  }
+
+  get diasMini(): Date[] {
+
+    const primeiro = new Date(this.mesMini.getFullYear(), this.mesMini.getMonth(), 1);
+    const inicio = new Date(primeiro);
+    inicio.setDate(1 - primeiro.getDay());
+
+    return Array.from({ length: 42 }, (_, i) => {
+      const d = new Date(inicio);
+      d.setDate(inicio.getDate() + i);
+      return d;
+    });
+
+  }
+
+  moverMiniMes(direcao: number): void {
+    const m = new Date(this.mesMini);
+    m.setMonth(m.getMonth() + direcao);
+    this.mesMini = m;
+  }
+
+  selecionarDia(d: Date): void {
+    this.dataSelecionada = new Date(d);
+    this.mesMini = new Date(d.getFullYear(), d.getMonth(), 1);
+  }
+
+  // ===== NAVEGAÇÃO =====
+
+  hoje(): void {
+    this.selecionarDia(new Date());
+  }
+
+  mover(direcao: number): void {
+
+    const d = new Date(this.dataSelecionada);
+
+    if (this.visao === 'mes') {
+      d.setMonth(d.getMonth() + direcao);
+    } else if (this.visao === 'dia') {
+      d.setDate(d.getDate() + direcao);
+    } else {
+      d.setDate(d.getDate() + direcao * 7);
     }
 
-    let maiorQuantidade = 0;
-
-    let mesEscolhido =
-      hoje.getMonth();
-
-    for (const mes in quantidadePorMes) {
-
-      const quantidade =
-        quantidadePorMes[Number(mes)];
-
-      if (quantidade > maiorQuantidade) {
-
-        maiorQuantidade = quantidade;
-
-        mesEscolhido =
-          Number(mes);
-
-      }
-
-    }
-
-    this.mesSelecionado =
-      mesEscolhido;
+    this.selecionarDia(d);
 
   }
 
+  // ===== EVENTOS NA GRADE =====
 
-  /* =========================================
-     IR PARA HOJE
-  ========================================= */
+  eventosDoDia(d: Date): Evento[] {
+    return this.eventos
+      .filter(e => this.mesmoDia(e.inicio, d))
+      .sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
+  }
 
-  irParaHoje(): void {
+  estiloEvento(e: Evento): { [chave: string]: string } {
 
-    const hoje = new Date();
+    const minutos = e.inicio.getHours() * 60 + e.inicio.getMinutes();
+    const duracao = Math.max(30, (e.fim.getTime() - e.inicio.getTime()) / 60000);
 
-    this.anoAtual =
-      hoje.getFullYear();
-
-    this.mesSelecionado =
-      hoje.getMonth();
-
-    this.semanaAtual =
-      this.obterInicioSemana(hoje);
-
-    this.atualizarSemana();
+    return {
+      top: minutos * this.pxPorMinuto + 'px',
+      height: duracao * this.pxPorMinuto + 'px'
+    };
 
   }
 
+  // ===== MODAL: NOVO / EDITAR EVENTO =====
 
-  /* =========================================
-     VERIFICAR SE É HOJE
-  ========================================= */
+  private dataIso(d: Date): string {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
 
-  ehHoje(data: Date): boolean {
+  private horaIso(d: Date): string {
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
 
-    const hoje = new Date();
+  private novoRascunho(inicio: Date): Rascunho {
 
-    return (
-      data.getDate() === hoje.getDate() &&
-      data.getMonth() === hoje.getMonth() &&
-      data.getFullYear() === hoje.getFullYear()
-    );
+    const fim = new Date(inicio.getTime() + 60 * 60000);
+
+    return {
+      id: null,
+      titulo: '',
+      detalhes: '',
+      data: this.dataIso(inicio),
+      horaInicio: this.horaIso(inicio),
+      horaFim: this.horaIso(fim)
+    };
 
   }
 
+  proximaHora(): number {
+    return Math.min(new Date().getHours() + 1, 23);
+  }
 
-  /* =========================================
-     FERIADOS NACIONAIS
-  ========================================= */
+  novoEventoEm(d: Date, hora: number): void {
 
-  obterFeriados(ano: number): Feriado[] {
+    const inicio = new Date(d);
+    inicio.setHours(hora, 0, 0, 0);
 
-    const feriados: Feriado[] = [
-
-      {
-        data: `${ano}-01-01`,
-        nome: 'Confraternização Universal'
-      },
-
-      {
-        data: `${ano}-04-21`,
-        nome: 'Tiradentes'
-      },
-
-      {
-        data: `${ano}-05-01`,
-        nome: 'Dia do Trabalho'
-      },
-
-      {
-        data: `${ano}-09-07`,
-        nome: 'Independência do Brasil'
-      },
-
-      {
-        data: `${ano}-10-12`,
-        nome: 'Nossa Senhora Aparecida'
-      },
-
-      {
-        data: `${ano}-11-02`,
-        nome: 'Finados'
-      },
-
-      {
-        data: `${ano}-11-15`,
-        nome: 'Proclamação da República'
-      },
-
-      {
-        data: `${ano}-11-20`,
-        nome: 'Dia da Consciência Negra'
-      },
-
-      {
-        data: `${ano}-12-25`,
-        nome: 'Natal'
-      }
-
-    ];
-
-    return feriados;
+    this.rascunho = this.novoRascunho(inicio);
+    this.modalAberto = true;
 
   }
 
+  editarEvento(e: Evento, evento: Event): void {
 
-  /* =========================================
-     FORMATO DA DATA (yyyy-mm-dd, horário local)
-  ========================================= */
+    evento.stopPropagation();
 
-  formatarData(data: Date): string {
+    this.rascunho = {
+      id: e.id,
+      titulo: e.titulo,
+      detalhes: e.detalhes,
+      data: this.dataIso(e.inicio),
+      horaInicio: this.horaIso(e.inicio),
+      horaFim: this.horaIso(e.fim)
+    };
 
-    const ano =
-      data.getFullYear();
-
-    const mes =
-      (data.getMonth() + 1)
-        .toString()
-        .padStart(2, '0');
-
-    const dia =
-      data.getDate()
-        .toString()
-        .padStart(2, '0');
-
-    return `${ano}-${mes}-${dia}`;
+    this.modalAberto = true;
 
   }
 
-
-  /* =========================================
-     VERIFICAR FERIADO
-  ========================================= */
-
-  obterFeriado(data: Date): string | null {
-
-    const dataFormatada =
-      this.formatarData(data);
-
-    const feriados =
-      this.obterFeriados(
-        data.getFullYear()
-      );
-
-    const feriado =
-      feriados.find(
-        item => item.data === dataFormatada
-      );
-
-    return feriado
-      ? feriado.nome
-      : null;
-
+  fecharModal(): void {
+    this.modalAberto = false;
   }
 
-
-  /* =========================================
-     TEXTO DA SEMANA
-  ========================================= */
-
-  get textoSemana(): string {
-
-    if (this.diasSemana.length === 0) {
-      return '';
-    }
-
-    const primeiro =
-      this.diasSemana[0].data;
-
-    const ultimo =
-      this.diasSemana[6].data;
-
-    const mesesAbreviados = [
-      'jan.',
-      'fev.',
-      'mar.',
-      'abr.',
-      'mai.',
-      'jun.',
-      'jul.',
-      'ago.',
-      'set.',
-      'out.',
-      'nov.',
-      'dez.'
-    ];
-
-    if (
-      primeiro.getMonth() ===
-      ultimo.getMonth()
-    ) {
-
-      return `${primeiro.getDate()} a ${ultimo.getDate()} de ${mesesAbreviados[primeiro.getMonth()]} de ${primeiro.getFullYear()}`;
-
-    }
-
-    return `${primeiro.getDate()} de ${mesesAbreviados[primeiro.getMonth()]} a ${ultimo.getDate()} de ${mesesAbreviados[ultimo.getMonth()]} de ${ultimo.getFullYear()}`;
-
+  private combinar(data: string, hora: string): Date {
+    return new Date(data + 'T' + hora + ':00');
   }
 
-
-  /* =========================================
-     SELECIONAR HORÁRIO
-  ========================================= */
-
-  selecionarHorario(
-    dia: DiaSemana,
-    horario: string
-  ): void {
-
-    this.diaSelecionado = dia;
-
-    this.horarioSelecionado = horario;
-
-    const lembrete =
-      this.obterLembrete(
-        dia,
-        horario
-      );
-
-    this.descricaoLembrete =
-      lembrete ? lembrete : '';
-
-    this.mostrarLembrete = true;
-
-  }
-
-
-  /* =========================================
-     OBTER LEMBRETE (texto, para a grade)
-  ========================================= */
-
-  obterLembrete(
-    dia: DiaSemana,
-    horario: string
-  ): string | null {
-
-    const data =
-      this.formatarData(dia.data);
-
-    const lembrete =
-      this.lembretes.find(item =>
-        item.data === data &&
-        item.horario === horario
-      );
-
-    return lembrete
-      ? lembrete.descricao
-      : null;
-
-  }
-
-
-  /* =========================================
-     SALVAR LEMBRETE (cria ou edita na API)
-  ========================================= */
-
-  salvarLembrete(): void {
-
-    if (
-      !this.diaSelecionado ||
-      !this.horarioSelecionado ||
-      this.salvando
-    ) {
-      return;
-    }
+  salvarEvento(): void {
 
     const usuario = SessaoService.usuario();
 
@@ -668,181 +372,70 @@ export class Calendario {
       return;
     }
 
-    const data =
-      this.formatarData(this.diaSelecionado.data);
-
-    const existente =
-      this.lembretes.find(item =>
-        item.data === data &&
-        item.horario === this.horarioSelecionado
-      );
-
-    const descricao =
-      this.descricaoLembrete.trim();
-
-    // texto vazio apaga o lembrete que já existia
-    if (descricao === '') {
-
-      if (existente) {
-        this.excluirLembrete();
-      } else {
-        this.fecharLembrete();
-      }
-
+    if (this.rascunho.titulo.trim() === '') {
+      alert('Dê um título ao evento.');
       return;
-
     }
 
-    // data e hora juntas, convertidas para UTC (mesmo padrão dos documentos)
-    const dataHora = new Date(this.diaSelecionado.data);
+    const inicio = this.combinar(this.rascunho.data, this.rascunho.horaInicio);
+    const fim = this.combinar(this.rascunho.data, this.rascunho.horaFim);
 
-    dataHora.setHours(
-      Number(this.horarioSelecionado.substring(0, 2)),
-      0,
-      0,
-      0
-    );
-
-    this.salvando = true;
-
-    if (existente) {
-
-      this.apiService.editarCalendario({
-        id: existente.id,
-        idUsuario: usuario.id,
-        data: dataHora.toISOString(),
-        descricao: descricao
-      }).subscribe({
-
-        next: () => {
-
-          existente.descricao = descricao;
-
-          this.concluirSalvar();
-
-        },
-
-        error: erro => this.falharSalvar(erro)
-
-      });
-
+    if (fim.getTime() <= inicio.getTime()) {
+      alert('A hora de término precisa ser depois do início.');
       return;
-
     }
 
-    this.apiService.criarCalendario({
+    const dados: any = {
       idUsuario: usuario.id,
-      data: dataHora.toISOString(),
-      descricao: descricao
-    }).subscribe({
+      data: inicio.toISOString(),
+      dataFim: fim.toISOString(),
+      descricao: this.rascunho.titulo.trim(),
+      detalhes: this.rascunho.detalhes
+    };
 
-      next: (criado: any) => {
+    const chamada = this.rascunho.id !== null
+      ? this.apiService.editarCalendario({ ...dados, id: this.rascunho.id })
+      : this.apiService.criarCalendario(dados);
 
-        this.lembretes.push({
-          id: criado.id,
-          data: data,
-          horario: this.horarioSelecionado,
-          descricao: descricao
-        });
-
-        this.concluirSalvar();
-
-      },
-
-      error: erro => this.falharSalvar(erro)
-
-    });
-
-  }
-
-
-  /* =========================================
-     EXCLUIR LEMBRETE (na API)
-  ========================================= */
-
-  excluirLembrete(): void {
-
-    if (
-      !this.diaSelecionado ||
-      !this.horarioSelecionado ||
-      this.salvando
-    ) {
-      return;
-    }
-
-    const data =
-      this.formatarData(this.diaSelecionado.data);
-
-    const existente =
-      this.lembretes.find(item =>
-        item.data === data &&
-        item.horario === this.horarioSelecionado
-      );
-
-    if (!existente) {
-      this.fecharLembrete();
-      return;
-    }
-
-    this.salvando = true;
-
-    this.apiService.excluirCalendario(existente.id).subscribe({
+    chamada.subscribe({
 
       next: () => {
-
-        this.lembretes =
-          this.lembretes.filter(item => item !== existente);
-
-        this.concluirSalvar();
-
+        this.modalAberto = false;
+        this.carregarEventos();
       },
 
-      error: erro => this.falharSalvar(erro)
+      error: erro => {
+        console.error('Erro ao salvar evento:', erro);
+        alert('Não foi possível salvar o evento.');
+      }
 
     });
 
   }
 
+  excluirEvento(): void {
 
-  /* =========================================
-     CONCLUIR / FALHAR SALVAR
-  ========================================= */
+    if (this.rascunho.id === null) {
+      return;
+    }
 
-  private concluirSalvar(): void {
+    if (!confirm('Excluir este evento?')) {
+      return;
+    }
 
-    this.salvando = false;
+    this.apiService.excluirCalendario(this.rascunho.id).subscribe({
 
-    this.fecharLembrete();
+      next: () => {
+        this.modalAberto = false;
+        this.carregarEventos();
+      },
 
-    this.changeDetectorRef.detectChanges();
+      error: erro => {
+        console.error('Erro ao excluir evento:', erro);
+        alert('Não foi possível excluir o evento.');
+      }
 
-  }
-
-  private falharSalvar(erro: any): void {
-
-    console.error('Erro ao salvar lembrete:', erro);
-
-    this.salvando = false;
-
-    alert('Não foi possível salvar o lembrete. Verifique se a API está rodando.');
-
-    this.changeDetectorRef.detectChanges();
-
-  }
-  
-  /* =========================================
-     FECHAR LEMBRETE
-  ========================================= */
-
-  fecharLembrete(): void {
-
-    this.mostrarLembrete = false;
-
-    this.diaSelecionado = null;
-
-    this.horarioSelecionado = '';
-
-    this.descricaoLembrete = '';
+    });
 
   }
 
